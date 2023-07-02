@@ -56,8 +56,8 @@ class LitModel(pl.LightningModule):
 
 
 def main(args):
-    train_loader = DataLoader(MNIST(os.getcwd(), download=True, transform=transforms.ToTensor()))
-    trainer = pl.Trainer(accelerator="gpu", devices=2, num_nodes=2, strategy="ddp")
+    train_loader = DataLoader(MNIST(os.getcwd(), download=True, transform=transforms.ToTensor()), batch_size=128)
+    trainer = pl.Trainer(accelerator="gpu", devices=-1, num_nodes=2, strategy="ddp")
     model = LitModel()
 
     logger = tb.TensorBoardLogger("lightning_logs", name="mnisttest")
