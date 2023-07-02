@@ -1,7 +1,5 @@
 from torch.utils.data import DataLoader
 import os
-
-import light_module
 from torchvision.datasets import MNIST
 import torchvision.transforms as transforms
 import argparse
@@ -27,6 +25,9 @@ import argparse
 
 import lightning.pytorch as pl
 import lightning.pytorch.loggers.tensorboard as tb
+from lightning.pytorch.plugins.environments import SLURMEnvironment
+import signal
+
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import relu
@@ -57,7 +58,8 @@ class LitModel(pl.LightningModule):
 
 def main(args):
     train_loader = DataLoader(MNIST(os.getcwd(), download=True, transform=transforms.ToTensor()), batch_size=128)
-    trainer = pl.Trainer(accelerator="gpu", devices=-1, num_nodes=2, strategy="ddp")
+    trainer = pl.Trainer(accelerator="gpu", devices=2, num_nodes=2, strategy="ddp",
+                         plugins=[SLURMEnvironment(requeue_signal=signal.SIGUSR1)])
     model = LitModel()
 
     logger = tb.TensorBoardLogger("lightning_logs", name="mnisttest")
