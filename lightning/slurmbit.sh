@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # SLURM SUBMIT SCRIPT
-#SBATCH --nodes=2
+#SBATCH --nodes=4
 #SBATCH --account=euge-k
 #SBATCH --partition=gilbreth-k
 #SBATCH --gres=gpu:2
-#SBATCH --cpus-per-task=32
-#SBATCH --ntasks-per-node=2
+#SBATCH --cpus-per-task=64
+#SBATCH --ntasks-per-node=1
 #SBATCH --time=0-02:00:00
 
 # activate conda env
