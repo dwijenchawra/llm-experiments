@@ -3,6 +3,8 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForSequenceClassification
 
+from transformers import Trainer, TrainingArguments
+
 
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
@@ -31,8 +33,8 @@ small_eval_dataset = tokenized_datasets["test"].shuffle(seed=42).select(range(10
 
 
 
-def main(hparams):
-    model = LightningTemplateModel(hparams)
+def main():
+    model = AutoModelForSequenceClassification.from_pretrained("bert-base-cased", num_labels=5)
 
     trainer = Trainer(
         gpus=8,
@@ -45,8 +47,7 @@ def main(hparams):
 
 if __name__ == '__main__':
     root_dir = os.path.dirname(os.path.realpath(__file__))
-    parent_parser = ArgumentParser(add_help=False)
-    hyperparams = parser.parse_args()
+    # hyperparams = parser.parse_args()
 
     # TRAIN
-    main(hyperparams)
+    main()
