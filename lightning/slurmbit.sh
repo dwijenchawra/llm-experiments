@@ -1,16 +1,19 @@
 #!/bin/zsh
 
 # SLURM SUBMIT SCRIPT
-#SBATCH --nodes=2
+#SBATCH --nodes=2   # This needs to match Trainer(num_nodes=...)
 #SBATCH --account=euge-k
 #SBATCH --partition=gilbreth-k
 #SBATCH --gres=gpu:2
-#SBATCH --cpus-per-task=64
-#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=32
+#SBATCH --ntasks-per-node=2    # This needs to match Trainer(devices=...)
 #SBATCH --time=0-02:00:00
-#SBATCH --job-name=multinode_training
+#SBATCH --job-name=maxdevicesgpu
 #SBATCH --output=slurmout/%x-%j.out
 #SBATCH --error=slurmout/%x-%j.err
+
+# this is for auto resubmit
+#SBATCH --signal=SIGUSR1@90
 
 # activate conda env
 mamba activate ml
