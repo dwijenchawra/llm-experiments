@@ -1,0 +1,4 @@
+lightning/__pycache__/*
+lightning/lightning_logs/*
+lightning/MNIST/*
+lightning/slurmout/*
