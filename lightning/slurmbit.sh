@@ -1,13 +1,16 @@
-#!/bin/bash
+#!/bin/zsh
 
 # SLURM SUBMIT SCRIPT
-#SBATCH --nodes=4
+#SBATCH --nodes=2
 #SBATCH --account=euge-k
 #SBATCH --partition=gilbreth-k
 #SBATCH --gres=gpu:2
 #SBATCH --cpus-per-task=64
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=0-02:00:00
+#SBATCH --job-name=multinode_training
+#SBATCH --output=slurmout/%x-%j.out
+#SBATCH --error=slurmout/%x-%j.err
 
 # activate conda env
 mamba activate ml
@@ -18,7 +21,7 @@ export PYTHONFAULTHANDLER=1
 
 # on your cluster you might need these:
 # set the network interface
-# export NCCL_SOCKET_IFNAME=^docker0,lo
+export NCCL_SOCKET_IFNAME="ib"
 
 # might need the latest CUDA
 # module load NCCL/2.4.7-1-cuda.10.0
