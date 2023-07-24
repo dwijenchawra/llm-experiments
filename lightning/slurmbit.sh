@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --ntasks-per-node=2    # This needs to match Trainer(devices=...)
 #SBATCH --time=0-02:00:00
-#SBATCH --job-name=maxdevicesgpu
+#SBATCH --job-name=twonodellm
 #SBATCH --output=slurmout/%x-%j.out
 #SBATCH --error=slurmout/%x-%j.err
 
