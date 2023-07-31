@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 # SLURM SUBMIT SCRIPT
-#SBATCH --nodes=2   # This needs to match Trainer(num_nodes=...)
+#SBATCH --nodes=3   # This needs to match Trainer(num_nodes=...)
 #SBATCH --account=euge-k
 #SBATCH --partition=gilbreth-k
 #SBATCH --gres=gpu:2
@@ -31,4 +31,4 @@ export NCCL_SOCKET_IFNAME="ib"
 module load cuda/12.1.0
 
 # run script from above
-srun python multnodetest.py
+srun python dollyv2modules.py
