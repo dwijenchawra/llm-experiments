@@ -3,6 +3,7 @@ import os
 from torchvision.datasets import MNIST
 import torchvision.transforms as transforms
 import argparse
+import pandas as pd
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import lightning.pytorch as pl
@@ -20,7 +21,7 @@ from datasets import load_dataset
 import os
 os.environ['TRANSFORMERS_CACHE'] = '/scratch/gilbreth/dchawra/cache/'
 os.environ['HF_HOME'] = '/scratch/gilbreth/dchawra/hfhome/'
-
+MODEL_NAME = "databricks/dolly-v2-12b"
 
 
 
@@ -80,36 +81,67 @@ os.environ['HF_HOME'] = '/scratch/gilbreth/dchawra/hfhome/'
 
     # def configure_optimizers(self):
     #     return Adam(self.parameters(), lr=0.02)
-    
-class TextGenerationModule(pl.LightningModule):
-    def __init__(self, model_name_or_path, learning_rate=1e-4):
-        super(TextGenerationModule, self).__init__()
-        self.model = AutoModelForCausalLM.from_pretrained(model_name_or_path, cache_dir="/scratch/gilbreth/dchawra/cache/")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, cache_dir="/scratch/gilbreth/dchawra/cache/")
-        self.learning_rate = learning_rate
 
-    def forward(self, input_ids, **kwargs):
-        return self.model(input_ids, **kwargs)
+class DollyV2Model(pl.LightningModule):
+    def __init__(self, lr=2e-5, eps=1e-8):
+        super().__init__()
+        self.lr = lr
+        self.eps = eps
+        self.model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+        self.predictions = []
+        self.references = []
+
+    def forward(self, batch):
+        outputs = self.model(
+            batch["input_ids"], 
+            attention_mask=batch["attention_mask"], 
+            labels=batch["labels"]
+        )
+        return outputs.loss
 
     def training_step(self, batch, batch_idx):
-        input_ids = batch["input_ids"]
-        labels = batch["labels"]
-        outputs = self(input_ids, labels=labels)
-        loss = outputs.loss
+        loss = self.forward(batch)
+        self.log("train_loss", loss, prog_bar=True, on_step=True)
         return loss
 
     def configure_optimizers(self):
-        return AdamW(self.parameters(), lr=self.learning_rate)
+        if self.global_rank == 0:
+            print(self.trainer.model)
+        return torch.optim.AdamW(self.trainer.model.parameters(), lr=self.lr, eps=self.eps)
+
+def split_text(batch: pd.DataFrame) -> pd.DataFrame:
+    text = list(batch["text"])
+    flat_text = "".join(text)
+    split_text = [
+        x.strip()
+        for x in flat_text.split("\n")
+        if x.strip() and not x.strip()[-1] == ":"
+    ]
+    return pd.DataFrame(split_text, columns=["text"])
 
 
+def tokenize(batch: pd.DataFrame) -> dict:
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, padding_side="left")
+    tokenizer.pad_token = tokenizer.eos_token
+    ret = tokenizer(
+        list(batch["text"]),
+        truncation=True,
+        max_length=256,
+        padding="max_length",
+        return_tensors="np",
+    )
+    ret["labels"] = ret["input_ids"].copy()
+    return dict(ret)
 
 
 def main(args):
     torch.set_float32_matmul_precision('medium')
 
     print("Loading dataset...")
-    dataset = load_dataset("wikitext", "wikitext-103-v1", cache_dir="/scratch/gilbreth/dchawra/cache/")
+    dataset = load_dataset("tiny_shakespeare", cache_dir="/scratch/gilbreth/dchawra/cache/")
     train_loader = DataLoader(dataset, batch_size=128)
+
+
 
     print("Loading model...")
 
