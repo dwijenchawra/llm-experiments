@@ -1,26 +1,3 @@
-from torch.utils.data import DataLoader
-import os
-from torchvision.datasets import MNIST
-import torchvision.transforms as transforms
-import argparse
-import pandas as pd
-
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import lightning.pytorch as pl
-import lightning.pytorch.loggers.tensorboard as tb
-from lightning.pytorch.plugins.environments import SLURMEnvironment
-import signal
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch import relu
-from torch.optim import Adam, AdamW
-from datasets import load_dataset
-
-import os
-os.environ['TRANSFORMERS_CACHE'] = '/scratch/gilbreth/dchawra/cache/'
-os.environ['HF_HOME'] = '/scratch/gilbreth/dchawra/hfhome/'
 MODEL_NAME = "databricks/dolly-v2-12b"
 
 
