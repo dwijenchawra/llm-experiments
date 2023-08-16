@@ -34,28 +34,6 @@ class TextGenDataModule(pl.LightningDataModule):
         self.dataset = dataset
         self.batch_size = batch_size
 
-    ##### SKIPPING PREPARING BECAUSE TRANSFORMERS HAS LAZY TOKENIZATION #####
-
-    # def prepare_data(self):
-    #     data = load_dataset(self.dataset, cache_dir="/scratch/gilbreth/dchawra/cache/")
-    #     tokenizer = AutoTokenizer.from_pretrained(self.model_name, padding_side="left")
-
-    #     # # tokenize all text
-    #     # data = data.map(
-    #     #     lambda batch: tokenizer(
-    #     #         batch["text"],
-    #     #         truncation=True, # truncates text to max_length
-    #     #         max_length=1024, # max length of text (set thsi to model max ctx len)
-    #     #         padding="max_length", # pads to max_length if the line is less than the max length
-    #     #         return_tensors="np", # returns tensors in np format
-    #     #     ),
-    #     #     batched=True # batched mapping for efficiency
-    #     # )
-
-    #     # # save this somewhere
-    #     # data.save_to_disk("/scratch/gilbreth/dchawra/datasets/tiny_shakespeare_tokenized")
-
-
     def setup(self, stage: str):
         # load prepared dataset from disk with path
         tokenizer = AutoTokenizer.from_pretrained(self.model_name, padding_side="left")
@@ -67,7 +45,7 @@ class TextGenDataModule(pl.LightningDataModule):
             lambda batch: tokenizer(
                 batch["text"],
                 truncation=True, # truncates text to max_length
-                max_length=1024, # max length of text (set thsi to model max ctx len)
+                max_length=128, # max length of text (ideally this would be the max length of the model)
                 padding="max_length", # pads to max_length if the line is less than the max length
                 return_tensors="np", # returns tensors in np format
             ))
@@ -122,14 +100,18 @@ def main(args):
 
     print("Loading model...")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=2, num_nodes=3, strategy="ddp",
-                         plugins=[SLURMEnvironment(requeue_signal=signal.SIGUSR1)])
+    trainer = pl.Trainer(accelerator="gpu", devices=2, num_nodes=1, strategy="ddp",
+                         plugins=[SLURMEnvironment(requeue_signal=signal.SIGUSR1)],
+                         max_epochs=100,
+                         max_steps=1000)    
     model = DollyModule(MODEL_NAME, learning_rate=1e-4)
-
-    # logger = tb.TensorBoardLogger("lightning_logs", name="mnisttest")
 
     print("Starting training...")
     trainer.fit(model, train_dataloaders=train_loader)
+
+    # save model in huggingface format
+    trainer.save_checkpoint("/scratch/gilbreth/dchawra/text-generation-webui/models/")
+    print("Model saved.")
 
 
 if __name__ == "__main__":

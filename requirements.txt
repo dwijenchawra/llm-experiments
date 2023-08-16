@@ -1,0 +1,8 @@
+datasets==2.12.0
+datautils==1.0.3
+pandas==2.0.1
+torch==2.1.0.dev20230804+cu118
+torchmetrics==0.11.4
+torchvision==0.15.2
+tqdm==4.65.0
+transformers==4.31.0
